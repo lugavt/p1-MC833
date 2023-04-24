@@ -8,15 +8,17 @@
 int main() {
 
     char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5555; //arbitrario
-
+    int port = 5557; //arbitrario
+    struct sockaddr_in client_address;
     int client_socket = socket(AF_INET, SOCK_STREAM, 0);
+
     if (client_socket < 0) {
         perror("Erro ao criar socket do cliente");
         exit(1);
     }
 
     struct sockaddr_in server_address;
+    memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = inet_addr(ip);
     server_address.sin_port = port;
