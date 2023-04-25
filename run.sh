@@ -1,3 +1,3 @@
 #!/bin/bash
-gcc $1 -pthread -o programa
+gcc $1 -pthread -o programa cJSON.o
 ./programa

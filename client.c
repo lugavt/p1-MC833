@@ -8,7 +8,7 @@
 int main() {
 
     char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5557; //arbitrario
+    int port = 5560; //arbitrario
     struct sockaddr_in client_address;
     int client_socket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -33,12 +33,12 @@ int main() {
     int read_size = 0;
 
     while (1) {
-        printf("> ");
         fgets(buffer, sizeof(buffer), stdin);
         printf("%s", buffer);
-        send(client_socket, buffer, strlen(buffer), 0);
-
-        read_size = recv(client_socket, buffer, sizeof(buffer), 0);
+        char *json_str = "{\"email\": \"joao@gmail.com\",\"nome\": \"João\",\"sobrenome\": \"Silva\",\"cidade\": \"São Paulo\",\"formacao\": \"Engenharia\",\"ano_formatura\": 2022,\"habilidades\": \"Python, Java\"}";
+        strcpy(buffer, json_str);
+        send(client_socket, buffer, strlen(buffer),0);
+        read_size = recv(client_socket, buffer, sizeof(buffer),0);
         if (read_size <= 0) {
             break;
         }
@@ -46,6 +46,16 @@ int main() {
         buffer[read_size] = '\0';
         printf("%s", buffer);
     }
+
+//     struct profile { //struct contendo as infos de perfil
+//     char email[50];
+//     char nome[50];
+//     char sobrenome[50];
+//     char cidade[50];
+//     char formacao[50];
+//     int ano_formatura;
+//     char habilidades[100];
+// };
 
     close(client_socket);
 
