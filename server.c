@@ -1,3 +1,11 @@
+            // Profile p;
+            // strcpy(p.email, cJSON_GetObjectItem(json, "email")->valuestring);
+            // strcpy(p.nome, cJSON_GetObjectItem(json, "nome")->valuestring);
+            // strcpy(p.sobrenome, cJSON_GetObjectItem(json, "sobrenome")->valuestring);
+            // strcpy(p.cidade, cJSON_GetObjectItem(json, "cidade")->valuestring);
+            // strcpy(p.formacao, cJSON_GetObjectItem(json, "formacao")->valuestring);
+            // p.ano_formatura = cJSON_GetObjectItem(json, "ano_formatura")->valueint;
+            // strcpy(p.habilidades, cJSON_GetObjectItem(json, "habilidades")->valuestring);
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +38,6 @@ void* handle_client(void* arg) {
     while (1) {
         read_size = recv(client_socket, buffer, sizeof(buffer),0);
         if (read_size > 0){
-
             buffer[read_size] = '\0';
             cJSON *jsonPayload = cJSON_Parse(buffer);
             if (jsonPayload == NULL) {
@@ -38,35 +45,32 @@ void* handle_client(void* arg) {
                 break;
             }
 
-            cJSON *message = cJSON_GetObjectItem(jsonPayload, "message");
             cJSON *action = cJSON_GetObjectItem(jsonPayload, "action");
-            
+            cJSON *message = cJSON_GetObjectItem(jsonPayload, "message");
             FILE *fp = fopen("data.json", "r");
             char fileBuffer[1024];
             fread(fileBuffer, 1, 1024, fp);
             fclose(fp);
+            
+            switch(action){
+                case "register":
+                    int existeId = 0;
+                    cJSON *data_json = cJSON_Parse(fileBuffer);
+                    cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
+                    for(int i = 0; i < num_profiles; i++){ //verificando se ta ja tem
+                        cJSON *email = cJSON_GetObjectItem(profiles_array[i], "email");
+                        if (email == cJSON_GetObjectItem(message, "email")) existeId = 1;
+                    if(existeId == 0)   cJSON_AddItemToArray(profiles_array, message);
+                    fp = fopen("data.json", "w");
+                    fprintf(fp, "%s", cJSON_PrintUnformatted(data_json));
+                    fclose(fp);
+                    }
 
-            cJSON *data_json = cJSON_Parse(fileBuffer);
-            cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
+                    cJSON_Delete(jsonPayload);
 
-            cJSON_AddItemToArray(profiles_array, message);
 
-            fp = fopen("data.json", "w");
-            fprintf(fp, "%s", cJSON_PrintUnformatted(data_json));
-            fclose(fp);
+            }
 
-            // Profile p;
-            // strcpy(p.email, cJSON_GetObjectItem(json, "email")->valuestring);
-            // strcpy(p.nome, cJSON_GetObjectItem(json, "nome")->valuestring);
-            // strcpy(p.sobrenome, cJSON_GetObjectItem(json, "sobrenome")->valuestring);
-            // strcpy(p.cidade, cJSON_GetObjectItem(json, "cidade")->valuestring);
-            // strcpy(p.formacao, cJSON_GetObjectItem(json, "formacao")->valuestring);
-            // p.ano_formatura = cJSON_GetObjectItem(json, "ano_formatura")->valueint;
-            // strcpy(p.habilidades, cJSON_GetObjectItem(json, "habilidades")->valuestring);
-
-            cJSON_Delete(jsonPayload);
-
-            // printf("Perfil:\nemail: %s\nnome: %s\nsobrenome: %s\ncidade: %s\nformacao: %s\nano_formatura: %d\nhabilidades: %s\n", p.email, p.nome, p.sobrenome, p.cidade, p.formacao, p.ano_formatura, p.habilidades);
 
             printf("read_size: %d\n", read_size);
             printf("buffer: %s\n", buffer);
