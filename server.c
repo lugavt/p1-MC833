@@ -61,6 +61,7 @@ void* handle_client(void* arg) {
             int num_profiles = cJSON_GetArraySize(profiles_array);
             
             if (strcmp(action->valuestring, "register") == 0){ // register
+
                 int existeId = 0;
                 cJSON *inputEmail = cJSON_GetObjectItem(message, "email");
 
@@ -88,13 +89,29 @@ void* handle_client(void* arg) {
                 }
             }
 
+            if (strcmp(action->valuestring, "getAllProfilesByCourse") == 0){
+
+                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+                    cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
+                    cJSON *course = cJSON_GetObjectItem(profile, "formacao");
+                    if (strcmp(course->valuestring, message->valuestring) == 0){
+                        cJSON *email = cJSON_GetObjectItem(profile, "email");
+                        cJSON *name = cJSON_GetObjectItem(profile, "nome");
+                        sprintf(buffer, "{\"email\": \"%s\", \"name\": %s}",
+                        email->valuestring, name->valuestring);
+
+                    } 
+                }
+            }
+
             else if (strcmp(action->valuestring, "getAllProfiles") == 0){ //retorna o arquivo em forma de string
                 bzero(buffer, 1024);
                 strcpy(buffer, data_json->valuestring);
                 send(client_socket, buffer, strlen(buffer), 0);
             }
 
-                    cJSON_Delete(jsonPayload);
+            cJSON_Delete(jsonPayload);
+
             }
         }
     }
