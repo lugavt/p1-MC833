@@ -53,13 +53,14 @@ int main() {
 
         printf("Escolha uma opcao:\n");
         printf("1 - Cadastro\n");
-        printf("2 - Opcao\n");
-        printf("3 - Opcao\n");
-        printf("4 - Opcao\n");
-        printf("5 - Opcao\n");
-        printf("6 - Opcao\n");
+        printf("2 - Coletar perfis através do curso\n");
+        printf("3 - Coletar perfis através das habilidades\n");
+        printf("4 - Coletar perfis através do ano de formação\n");
+        printf("5 - Coletar todos os perfis\n");
+        printf("6 - Coletar informações de um perfil\n");
+        printf("7 - Remover perfil\n");
 
-        printf("Digite a sua escolha (1-6): ");
+        printf("Digite a sua escolha (1-7): ");
         scanf("%d", &opcao);
 
         switch(opcao) {
@@ -109,19 +110,28 @@ int main() {
                 break;
 
             case 2:
-                printf("Voce escolheu a opcao 2.\n");
+                Payload payload;
+                strcpy(payload.action, "getAllProfilesByCourses");
                 break;
             case 3:
-                printf("Voce escolheu a opcao 3.\n");
+                Payload payload;
+                strcpy(payload.action, "getAllProfilesBySkills");
                 break;
             case 4:
-                printf("Voce escolheu a opcao 4.\n");
+                Payload payload;
+                strcpy(payload.action, "getAllProfilesByYear");
                 break;
             case 5:
-                printf("Voce escolheu a opcao 5.\n");
+                Payload payload;
+                strcpy(payload.action, "getAllProfiles");
                 break;
             case 6:
-                printf("Voce escolheu a opcao 6.\n");
+                Payload payload;
+                strcpy(payload.action, "getProfile");
+                break;
+            case 7:
+                Payload payload;
+                strcpy(payload.action, "removeProfile");
                 break;
             default:
                 printf("Opcao invalida.\n");
