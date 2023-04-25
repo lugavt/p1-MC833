@@ -36,7 +36,9 @@ void* handle_client(void* arg) {
     char buffer[1024];
     bzero(buffer, 1024);
     while (1) {
+        
         read_size = recv(client_socket, buffer, sizeof(buffer),0);
+        
         if (read_size > 0){
             buffer[read_size] = '\0';
             cJSON *jsonPayload = cJSON_Parse(buffer);
@@ -53,11 +55,11 @@ void* handle_client(void* arg) {
             char fileBuffer[1024];
             fread(fileBuffer, 1, 1024, fp);
             fclose(fp);
+            cJSON *data_json = cJSON_Parse(fileBuffer);
+            cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
             
             if (strcmp(action->valuestring, "register") == 0){ // register
                 int existeId = 0;
-                cJSON *data_json = cJSON_Parse(fileBuffer);
-                cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
                 for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *email = cJSON_GetObjectItem(profile, "email");
@@ -81,10 +83,12 @@ void* handle_client(void* arg) {
                     send(client_socket, buffer, strlen(buffer), 0);
                 }
             }
+
+            else if (strcmp(action->message, "getAllProfilesByCourses") == 0){
+
+            }
                     cJSON_Delete(jsonPayload);
             }
-            printf("read_size: %d\n", read_size);
-            printf("buffer: %s\n", buffer);
         }
     }
 
