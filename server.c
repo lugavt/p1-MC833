@@ -106,8 +106,10 @@ void* handle_client(void* arg) {
 
             else if (strcmp(action->valuestring, "getAllProfiles") == 0){ //retorna o arquivo em forma de string
                 bzero(buffer, 1024);
-                strcpy(buffer, data_json->valuestring);
+                char *json_str = cJSON_PrintUnformatted(data_json);
+                strcpy(buffer, json_str);
                 send(client_socket, buffer, strlen(buffer), 0);
+                free(json_str);
             }
 
             cJSON_Delete(jsonPayload);
