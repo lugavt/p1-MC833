@@ -7,8 +7,23 @@
 
 int main() {
 
+    typedef struct { //struct contendo as infos de perfil
+        char email[50];
+        char nome[50];
+        char sobrenome[50];
+        char cidade[50];
+        char formacao[50];
+        int ano_formatura;
+        char habilidades[100];
+    } Profile;
+
+    typedef struct { //struct contendo o payload das mensagens a serem enviadas
+        char action[50];
+        char message[500];
+    } Payload;
+
     char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5560; //arbitrario
+    int port = 5561; //arbitrario
     struct sockaddr_in client_address;
     int client_socket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -33,29 +48,88 @@ int main() {
     int read_size = 0;
 
     while (1) {
-        fgets(buffer, sizeof(buffer), stdin);
-        printf("%s", buffer);
-        char *json_str = "{\"email\": \"joao@gmail.com\",\"nome\": \"João\",\"sobrenome\": \"Silva\",\"cidade\": \"São Paulo\",\"formacao\": \"Engenharia\",\"ano_formatura\": 2022,\"habilidades\": \"Python, Java\"}";
-        strcpy(buffer, json_str);
-        send(client_socket, buffer, strlen(buffer),0);
-        read_size = recv(client_socket, buffer, sizeof(buffer),0);
-        if (read_size <= 0) {
-            break;
+
+        int opcao;
+
+        printf("Escolha uma opcao:\n");
+        printf("1 - Cadastro\n");
+        printf("2 - Opcao\n");
+        printf("3 - Opcao\n");
+        printf("4 - Opcao\n");
+        printf("5 - Opcao\n");
+        printf("6 - Opcao\n");
+
+        printf("Digite a sua escolha (1-6): ");
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 1:
+                Profile profile;
+                Payload payload;
+                strcpy(payload.action, "register");
+
+                printf("Para realizar o cadastro precisaremos de algumas informações: \n");
+
+                printf("Digite o seu email: ");
+                scanf("%s", profile.email);
+
+                printf("Digite o seu nome: ");
+                scanf("%s", profile.nome);
+
+                printf("Digite o seu sobrenome: ");
+                scanf("%s", profile.sobrenome);
+
+                printf("Digite a sua cidade: ");
+                scanf("%s", profile.cidade);
+
+                printf("Digite a sua formacao: ");
+                scanf("%s", profile.formacao);
+
+                printf("Digite o ano de formatura: ");
+                scanf("%d", &profile.ano_formatura);
+
+                printf("Digite as suas habilidades: ");
+                scanf("%s", profile.habilidades);
+
+                sprintf(payload.message, "{\"email\": \"%s\", \"nome\": \"%s\", \"sobrenome\": \"%s\", \"cidade\": \"%s\", \"formacao\": \"%s\", \"ano_formatura\": %d, \"habilidades\": \"%s\"}",
+                profile.email, profile.nome, profile.sobrenome, profile.cidade, profile.formacao, profile.ano_formatura, profile.habilidades);
+
+                sprintf(buffer, "{\"action\": \"%s\", \"message\": %s}",
+                payload.action, payload.message);
+                printf("buffer: %s\n", buffer);
+                send(client_socket, buffer, strlen(buffer),0);
+                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+
+                if (read_size <= 0) {
+                    break;
+                }
+
+                buffer[read_size] = '\0';
+                printf("%s", buffer);
+                break;
+
+            case 2:
+                printf("Voce escolheu a opcao 2.\n");
+                break;
+            case 3:
+                printf("Voce escolheu a opcao 3.\n");
+                break;
+            case 4:
+                printf("Voce escolheu a opcao 4.\n");
+                break;
+            case 5:
+                printf("Voce escolheu a opcao 5.\n");
+                break;
+            case 6:
+                printf("Voce escolheu a opcao 6.\n");
+                break;
+            default:
+                printf("Opcao invalida.\n");
+                break;
         }
 
-        buffer[read_size] = '\0';
-        printf("%s", buffer);
+        //char *json_str = "{\"email\": \"gui@gmail.com\",\"nome\": \"Guilherme\",\"sobrenome\": \"Tezoli\",\"cidade\": \"São Paulo\",\"formacao\": \"Engenharia\",\"ano_formatura\": 2024,\"habilidades\": \"Python, Java, REDES\"}";
     }
-
-//     struct profile { //struct contendo as infos de perfil
-//     char email[50];
-//     char nome[50];
-//     char sobrenome[50];
-//     char cidade[50];
-//     char formacao[50];
-//     int ano_formatura;
-//     char habilidades[100];
-// };
 
     close(client_socket);
 
