@@ -27,16 +27,15 @@ typedef struct { //struct contendo as infos de perfil
 } Profile;
 
 //struct profile profiles[1000]; //criação do vetor de perfis (estrutura de dados é uma lista de structs)
-int num_profiles = 0;
 
 void* handle_client(void* arg) {
     int client_socket = *(int*)arg;
 
     int read_size;    
     char buffer[1024];
-    bzero(buffer, 1024);
     while (1) {
         
+        bzero(buffer, 1024);
         read_size = recv(client_socket, buffer, sizeof(buffer),0);
         
         if (read_size > 0){
@@ -49,17 +48,22 @@ void* handle_client(void* arg) {
 
             cJSON *action = cJSON_GetObjectItem(jsonPayload, "action");
             cJSON *message = cJSON_GetObjectItem(jsonPayload, "message");
-            cJSON *inputEmail = cJSON_GetObjectItem(message, "email");
+            
             FILE *fp = fopen("data.json", "r");
 
             char fileBuffer[1024];
             fread(fileBuffer, 1, 1024, fp);
             fclose(fp);
+
             cJSON *data_json = cJSON_Parse(fileBuffer);
             cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
+
+            int num_profiles = cJSON_GetArraySize(profiles_array);
             
             if (strcmp(action->valuestring, "register") == 0){ // register
                 int existeId = 0;
+                cJSON *inputEmail = cJSON_GetObjectItem(message, "email");
+
                 for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *email = cJSON_GetObjectItem(profile, "email");
@@ -84,9 +88,12 @@ void* handle_client(void* arg) {
                 }
             }
 
-            else if (strcmp(action->message, "getAllProfilesByCourses") == 0){
-
+            else if (strcmp(action->valuestring, "getAllProfiles") == 0){ //retorna o arquivo em forma de string
+                bzero(buffer, 1024);
+                strcpy(buffer, data_json->valuestring);
+                send(client_socket, buffer, strlen(buffer), 0);
             }
+
                     cJSON_Delete(jsonPayload);
             }
         }
@@ -96,7 +103,7 @@ void* handle_client(void* arg) {
 int main() {
 
     char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5561; //arbitrario
+    int port = 5562; //arbitrario
     socklen_t addr_size;
 
     int server_socket = socket(AF_INET, SOCK_STREAM, 0); //IPv4, TCP

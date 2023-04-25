@@ -23,7 +23,7 @@ int main() {
     } Payload;
 
     char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5561; //arbitrario
+    int port = 5562; //arbitrario
     struct sockaddr_in client_address;
     int client_socket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -51,6 +51,7 @@ int main() {
 
         int opcao;
 
+        printf("\n-----------------------------------------------\n");
         printf("Escolha uma opcao:\n");
         printf("1 - Cadastro\n");
         printf("2 - Coletar perfis através do curso\n");
@@ -59,14 +60,16 @@ int main() {
         printf("5 - Coletar todos os perfis\n");
         printf("6 - Coletar informações de um perfil\n");
         printf("7 - Remover perfil\n");
+        printf("8 - Desconectar e encerrar\n");
 
-        printf("Digite a sua escolha (1-7): ");
+        printf("Digite a sua escolha (1-8): ");
         scanf("%d", &opcao);
+
+        Payload payload;
 
         switch(opcao) {
             case 1:
                 Profile profile;
-                Payload payload;
                 strcpy(payload.action, "register");
 
                 printf("Para realizar o cadastro precisaremos de algumas informações: \n");
@@ -110,36 +113,157 @@ int main() {
                 break;
 
             case 2:
-                Payload payload;
-                strcpy(payload.action, "getAllProfilesByCourses");
+                
+                strcpy(payload.action, "getAllProfilesByCourse");
+                printf("Digite o curso selecionado: ");
+                scanf("%s", payload.message);
+                
+                // SEND
+                sprintf(buffer, "{\"action\": \"%s\", \"message\": %s}",
+                payload.action, payload.message);
+                printf("buffer: %s\n", buffer);
+                send(client_socket, buffer, strlen(buffer),0);
+
+                // RESPONSE
+                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+
+                if (read_size <= 0) {
+                    break;
+                }
+
+                buffer[read_size] = '\0';
+                printf("%s", buffer);
                 break;
+
             case 3:
-                Payload payload;
-                strcpy(payload.action, "getAllProfilesBySkills");
+                
+                strcpy(payload.action, "getAllProfilesBySkill");
+
+                printf("Digite a habilidade selecionada: ");
+                scanf("%s", payload.message);
+                
+                // SEND
+                sprintf(buffer, "{\"action\": \"%s\", \"message\": %s}",
+                payload.action, payload.message);
+                printf("buffer: %s\n", buffer);
+                send(client_socket, buffer, strlen(buffer),0);
+
+                // RESPONSE
+                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+
+                if (read_size <= 0) {
+                    break;
+                }
+
+                buffer[read_size] = '\0';
+                printf("%s", buffer);
                 break;
+
             case 4:
-                Payload payload;
+                
                 strcpy(payload.action, "getAllProfilesByYear");
+
+                printf("Digite o ano de formatura selecionado: ");
+                scanf("%d", payload.message);
+                
+                // SEND
+                sprintf(buffer, "{\"action\": \"%s\", \"message\": %d}",
+                payload.action, payload.message);
+                printf("buffer: %s\n", buffer);
+                send(client_socket, buffer, strlen(buffer),0);
+
+                // RESPONSE
+                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+
+                if (read_size <= 0) {
+                    break;
+                }
+
+                buffer[read_size] = '\0';
+                printf("%s", buffer);
                 break;
+
             case 5:
-                Payload payload;
+                
                 strcpy(payload.action, "getAllProfiles");
+                strcpy(payload.message, "");
+
+                // SEND
+                sprintf(buffer, "{\"action\": \"%s\", \"message\": \"%s\"}",
+                payload.action, payload.message);
+                printf("buffer: %s\n", buffer);
+                send(client_socket, buffer, strlen(buffer),0);
+
+                // RESPONSE
+                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+
+                if (read_size <= 0) {
+                    break;
+                }
+
+                buffer[read_size] = '\0';
+                printf("%s", buffer);
                 break;
+
             case 6:
-                Payload payload;
+                
                 strcpy(payload.action, "getProfile");
+
+                printf("Digite o email do perfil desejado: ");
+                scanf("%s", payload.message);
+                
+                // SEND
+                sprintf(buffer, "{\"action\": \"%s\", \"message\": %s}",
+                payload.action, payload.message);
+                printf("buffer: %s\n", buffer);
+                send(client_socket, buffer, strlen(buffer),0);
+
+                // RESPONSE
+                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+
+                if (read_size <= 0) {
+                    break;
+                }
+
+                buffer[read_size] = '\0';
+                printf("%s", buffer);
                 break;
+
             case 7:
-                Payload payload;
+                
                 strcpy(payload.action, "removeProfile");
+
+                printf("Digite o email do perfil a ser removido: ");
+                scanf("%s", payload.message);
+                
+                // SEND
+                sprintf(buffer, "{\"action\": \"%s\", \"message\": %s}",
+                payload.action, payload.message);
+                printf("buffer: %s\n", buffer);
+                send(client_socket, buffer, strlen(buffer),0);
+
+                // RESPONSE
+                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+
+                if (read_size <= 0) {
+                    break;
+                }
+
+                buffer[read_size] = '\0';
+                printf("%s", buffer);
                 break;
+
+            case 8:
+
+                close(client_socket);
+                printf("Você foi desconectado. Volte sempre :)\n");
+                return 1;
+
             default:
-                printf("Opcao invalida.\n");
+                printf("Opção inválida.\n");
                 break;
         }
-
-        //char *json_str = "{\"email\": \"gui@gmail.com\",\"nome\": \"Guilherme\",\"sobrenome\": \"Tezoli\",\"cidade\": \"São Paulo\",\"formacao\": \"Engenharia\",\"ano_formatura\": 2024,\"habilidades\": \"Python, Java, REDES\"}";
-    }
+ }
 
     close(client_socket);
 
