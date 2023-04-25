@@ -47,39 +47,47 @@ void* handle_client(void* arg) {
 
             cJSON *action = cJSON_GetObjectItem(jsonPayload, "action");
             cJSON *message = cJSON_GetObjectItem(jsonPayload, "message");
+            cJSON *inputEmail = cJSON_GetObjectItem(message, "email");
             FILE *fp = fopen("data.json", "r");
+
             char fileBuffer[1024];
             fread(fileBuffer, 1, 1024, fp);
             fclose(fp);
             
-            switch(action){
-                case "register":
-                    int existeId = 0;
-                    cJSON *data_json = cJSON_Parse(fileBuffer);
-                    cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
-                    for(int i = 0; i < num_profiles; i++){ //verificando se ta ja tem
-                        cJSON *email = cJSON_GetObjectItem(profiles_array[i], "email");
-                        if (email == cJSON_GetObjectItem(message, "email")) existeId = 1;
-                    if(existeId == 0)   cJSON_AddItemToArray(profiles_array, message);
+            if (strcmp(action->valuestring, "register") == 0){ // register
+                int existeId = 0;
+                cJSON *data_json = cJSON_Parse(fileBuffer);
+                cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
+                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+                    cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
+                    cJSON *email = cJSON_GetObjectItem(profile, "email");
+                    if (strcmp(email->valuestring, inputEmail->valuestring) == 0){ //ja existe o email
+                        existeId = 1;
+                        break;  
+                    } 
+                }
+                if(existeId == 0){
+                    cJSON_AddItemToArray(profiles_array, message);
                     fp = fopen("data.json", "w");
                     fprintf(fp, "%s", cJSON_PrintUnformatted(data_json));
                     fclose(fp);
-                    }
-
-                    cJSON_Delete(jsonPayload);
-
-
+                    bzero(buffer, 1024);
+                    strcpy(buffer, "usuário cadastrado com sucesso.\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
+                else{
+                    bzero(buffer, 1024);
+                    strcpy(buffer, "Falha ao cadastrar usuário. Email em uso.\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
             }
-
-
+                    cJSON_Delete(jsonPayload);
+            }
             printf("read_size: %d\n", read_size);
             printf("buffer: %s\n", buffer);
-            bzero(buffer, 1024);
-            strcpy(buffer, "recebemos\n");
-            send(client_socket, buffer, strlen(buffer), 0);
         }
     }
-}
+
 
 int main() {
 
