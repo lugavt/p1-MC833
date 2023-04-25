@@ -27,7 +27,6 @@ typedef struct { //struct contendo as infos de perfil
 } Profile;
 
 //struct profile profiles[1000]; //criação do vetor de perfis (estrutura de dados é uma lista de structs)
-int num_profiles = 0;
 
 void* handle_client(void* arg) {
     int client_socket = *(int*)arg;
@@ -48,16 +47,21 @@ void* handle_client(void* arg) {
             cJSON *action = cJSON_GetObjectItem(jsonPayload, "action");
             cJSON *message = cJSON_GetObjectItem(jsonPayload, "message");
             cJSON *inputEmail = cJSON_GetObjectItem(message, "email");
+            
             FILE *fp = fopen("data.json", "r");
 
             char fileBuffer[1024];
             fread(fileBuffer, 1, 1024, fp);
             fclose(fp);
+
+            cJSON *data_json = cJSON_Parse(fileBuffer);
+            cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
+
+            int num_profiles = cJSON_GetArraySize(profiles_array);
             
             if (strcmp(action->valuestring, "register") == 0){ // register
                 int existeId = 0;
-                cJSON *data_json = cJSON_Parse(fileBuffer);
-                cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
+
                 for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *email = cJSON_GetObjectItem(profile, "email");
@@ -83,8 +87,6 @@ void* handle_client(void* arg) {
             }
                     cJSON_Delete(jsonPayload);
             }
-            printf("read_size: %d\n", read_size);
-            printf("buffer: %s\n", buffer);
         }
     }
 
