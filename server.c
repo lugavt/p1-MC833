@@ -89,7 +89,7 @@ void* handle_client(void* arg) {
                 }
             }
 
-            if (strcmp(action->valuestring, "getAllProfilesByCourse") == 0){
+            else if (strcmp(action->valuestring, "getAllProfilesByCourse") == 0){
 
                 for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
@@ -110,6 +110,33 @@ void* handle_client(void* arg) {
                 strcpy(buffer, json_str);
                 send(client_socket, buffer, strlen(buffer), 0);
                 free(json_str);
+            }
+
+            else if (strcmp(action->valuestring, "getProfile") == 0){ //testar
+                for(int i = 0; i < num_profiles; i++){
+                    cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
+                    cJSON *email = cJSON_GetObjectItem(profile, "email");
+                    if (strcmp(email->valuestring, message->valuestring) == 0){
+                        char *json_str = cJSON_PrintUnformatted(profile);
+                        strcpy(buffer, json_str);
+                        send(client_socket, buffer, strlen(buffer), 0);
+                        free(json_str);  
+                    }
+                }
+            }
+
+            else if (strcmp(action->valuestring, "removeProfile") == 0){
+                for(int i = 0; i < num_profiles; i++){
+                    cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
+                    cJSON *email = cJSON_GetObjectItem(profile, "email");
+                    if (strcmp(email->valuestring, message->valuestring) == 0){
+                        cJSON_DeleteItemFromObject(profiles_array, i); // 10000% de chance de estar errado. verificar
+                        strcpy(buffer, "usuario removido");
+                        send(client_socket, buffer, strlen(buffer), 0);
+                    }
+                        strcpy(buffer, "erro: email nao cadastrado");
+                        send(client_socket, buffer, strlen(buffer), 0);                    
+                }
             }
 
             cJSON_Delete(jsonPayload);
