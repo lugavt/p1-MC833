@@ -8,74 +8,80 @@
 #include "cJSON.h"
 #include <stdbool.h>
 
-void* handle_client(void* arg) {
-    int client_socket = *(int*)arg;
+void* handle_client(void* arg) { // worker to handle client request
+    int client_socket = *(int*)arg; // get client socket
 
     int read_size;    
-    char buffer[1024];
+    char buffer[10000];
     while (1) {
         
-        bzero(buffer, 1024);
-        read_size = recv(client_socket, buffer, sizeof(buffer),0);
+        bzero(buffer, 10000); // clear buffer
+        read_size = recv(client_socket, buffer, sizeof(buffer),0); // read request message
         
         if (read_size > 0){
             buffer[read_size] = '\0';
-            cJSON *jsonPayload = cJSON_Parse(buffer);
+            cJSON *jsonPayload = cJSON_Parse(buffer); // parse message to get a JSON object
             if (jsonPayload == NULL) {
                 printf("Erro ao fazer o parse do JSON.\n");
                 break;
             }
 
+            // get action and message from payload
             cJSON *action = cJSON_GetObjectItem(jsonPayload, "action");
             cJSON *message = cJSON_GetObjectItem(jsonPayload, "message");
             
+            // get data from JSON file
             FILE *fp = fopen("data.json", "r");
 
-            char fileBuffer[1024];
-            fread(fileBuffer, 1, 1024, fp);
+            char fileBuffer[10000];
+            fread(fileBuffer, 1, 10000, fp);
             fclose(fp);
 
             cJSON *data_json = cJSON_Parse(fileBuffer);
             cJSON *profiles_array = cJSON_GetObjectItem(data_json, "profiles");
 
             int num_profiles = cJSON_GetArraySize(profiles_array);
-            
-            if (strcmp(action->valuestring, "register") == 0){ // register
+
+            // server actions
+            if (strcmp(action->valuestring, "register") == 0){
 
                 int existeId = 0;
                 cJSON *inputEmail = cJSON_GetObjectItem(message, "email");
 
-                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+                for(int i = 0; i < num_profiles; i++){ 
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *email = cJSON_GetObjectItem(profile, "email");
-                    if (strcmp(email->valuestring, inputEmail->valuestring) == 0){ //ja existe o email
+                    if (strcmp(email->valuestring, inputEmail->valuestring) == 0){ // verify if email is already in our database
                         existeId = 1;
                         break;  
                     } 
                 }
                 if(existeId == 0){
+                    // update data file with new profile
                     cJSON_AddItemToArray(profiles_array, message);
                     fp = fopen("data.json", "w");
                     fprintf(fp, "%s", cJSON_PrintUnformatted(data_json));
                     fclose(fp);
-                    bzero(buffer, 1024);
+                    bzero(buffer, 10000);
                     strcpy(buffer, "Usuário cadastrado com sucesso.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                 }
                 else{
-                    bzero(buffer, 1024);
+                    // error response -> email already in our database
+                    bzero(buffer, 10000);
                     strcpy(buffer, "Falha ao cadastrar usuário. Email em uso.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                 }
             }
             else if (strcmp(action->valuestring, "getAllProfilesByCourse") == 0){
-                
+
+                // response in JSON format {"profiles": []}
                 char payload[10000];
                 char profileJson[200];
                 strcpy(payload, "{\"profiles\":[");
                 int profilesCounter = 0;
 
-                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+                for(int i = 0; i < num_profiles; i++){
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *course = cJSON_GetObjectItem(profile, "formacao");
                     if (strcmp(course->valuestring, message->valuestring) == 0){
@@ -92,18 +98,19 @@ void* handle_client(void* arg) {
                 }
 
                 strcat(payload, "]}");
-                bzero(buffer, 1024);
+                bzero(buffer, 10000);
                 sprintf(buffer, payload);
                 send(client_socket, buffer, strlen(buffer), 0);
             }
             else if (strcmp(action->valuestring, "getAllProfilesBySkill") == 0){
+                // response in JSON format {"profiles": []}
 
                 char payload[10000];
                 char profileJson[200];
                 strcpy(payload, "{\"profiles\":[");
                 int profilesCounter = 0;
 
-                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+                for(int i = 0; i < num_profiles; i++){
 
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *skills_array = cJSON_GetObjectItem(profile, "habilidades");
@@ -126,18 +133,19 @@ void* handle_client(void* arg) {
                 }
 
                 strcat(payload, "]}");
-                bzero(buffer, 1024);
+                bzero(buffer, 10000);
                 sprintf(buffer, payload);
                 send(client_socket, buffer, strlen(buffer), 0);
             }
             else if (strcmp(action->valuestring, "getAllProfilesByYear") == 0){
+                // response in JSON format {"profiles": []}
 
                 char payload[10000];
                 char profileJson[200];
                 strcpy(payload, "{\"profiles\":[");
                 int profilesCounter = 0;
 
-                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+                for(int i = 0; i < num_profiles; i++){
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *year = cJSON_GetObjectItem(profile, "ano_formatura");
                     if (year->valueint == message->valueint){
@@ -155,18 +163,24 @@ void* handle_client(void* arg) {
                 }
 
                 strcat(payload, "]}");
-                bzero(buffer, 1024);
+                bzero(buffer, 10000);
                 sprintf(buffer, payload);
                 send(client_socket, buffer, strlen(buffer), 0);
             }
-            else if (strcmp(action->valuestring, "getAllProfiles") == 0){ //retorna o arquivo em forma de string
-                bzero(buffer, 1024);
+
+            else if (strcmp(action->valuestring, "getAllProfiles") == 0){
+                // return the entire data file
+
+                bzero(buffer, 10000);
                 char *json_str = cJSON_PrintUnformatted(data_json);
                 strcpy(buffer, json_str);
                 send(client_socket, buffer, strlen(buffer), 0);
                 free(json_str);
             }
-            else if (strcmp(action->valuestring, "getProfile") == 0){ //testar
+
+            else if (strcmp(action->valuestring, "getProfile") == 0){
+                // response in JSON format {"profiles": []}
+
                 char payload[10000];
                 strcpy(payload, "{\"profiles\":[");
 
@@ -183,7 +197,7 @@ void* handle_client(void* arg) {
                 }
 
                 strcat(payload, "]}");
-                bzero(buffer, 1024);
+                bzero(buffer, 10000);
                 strcpy(buffer, payload);
                 send(client_socket, buffer, strlen(buffer), 0);
 
@@ -211,6 +225,8 @@ void* handle_client(void* arg) {
                         break;
                     }                
                 }
+
+                // RESPONSE
                 if (profile_found) {strcpy(buffer, "Perfil removido com sucesso!");} else {strcpy(buffer, "Erro: perfil não encontrado!");}
                 send(client_socket, buffer, strlen(buffer), 0);    
             }
@@ -224,42 +240,45 @@ void* handle_client(void* arg) {
 
 int main() {
 
-    char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5563; //arbitrario
+    char *ip = "127.0.0.1";
+    int port = 5563;
     socklen_t addr_size;
 
     int server_socket = socket(AF_INET, SOCK_STREAM, 0); //IPv4, TCP
-    if (server_socket < 0) { //padrão para verificar erros
+    if (server_socket < 0) { // error handler
         perror("Erro ao criar socket do servidor");
         exit(1);
     }
 
-    struct sockaddr_in server_address, client_address; //sockaddr_in é uma estrutura que armazena o endereço e a porta
+    struct sockaddr_in server_address, client_address; //socket address settings
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = inet_addr(ip);
     server_address.sin_port = port;
 
+    // bind socket and address settings
     if (bind(server_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) {
         perror("Bind error");
         exit(1);
-    } //vincula o socket ao endereço. se retorna -1 deu erro
+    }
 
-    
+    // start listening
     listen(server_socket, 10);
 
     printf("Servidor escutando\n");
     int client_socket;
 
+    // waiting for client requests
     while (1) {
-        client_socket = accept(server_socket, NULL, NULL);
-        printf("client accepted\n");
-        pthread_t tid; // precisa de thread pra atender em simultaneo
-        pthread_create(&tid, NULL, handle_client, (void*)&client_socket);
+        client_socket = accept(server_socket, NULL, NULL); // accept client attempt to connect
+        printf("Cliente conectado\n");
+        pthread_t tid;
+        pthread_create(&tid, NULL, handle_client, (void*)&client_socket); // initialize new thread to handle client connection
         pthread_detach(tid);
     }
     
-    close(client_socket);
+    close(client_socket); // close client connection
+    printf("Cliente desconectado\n");
 
     return 0;
 }
