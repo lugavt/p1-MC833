@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "cJSON.h"
+#include <stdbool.h>
 
     
 typedef struct { //struct contendo as infos de perfil
@@ -79,7 +80,7 @@ void* handle_client(void* arg) {
                     fprintf(fp, "%s", cJSON_PrintUnformatted(data_json));
                     fclose(fp);
                     bzero(buffer, 1024);
-                    strcpy(buffer, "usuário cadastrado com sucesso.\n");
+                    strcpy(buffer, "Usuário cadastrado com sucesso.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                 }
                 else{
@@ -92,7 +93,7 @@ void* handle_client(void* arg) {
             else if (strcmp(action->valuestring, "getAllProfilesByCourse") == 0){
                 
                 char payload[10000];
-                char profileJson[200]
+                char profileJson[200];
                 strcpy(payload, "{\"profiles\":[");
                 int profilesCounter = 0;
 
@@ -100,13 +101,13 @@ void* handle_client(void* arg) {
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *course = cJSON_GetObjectItem(profile, "formacao");
                     if (strcmp(course->valuestring, message->valuestring) == 0){
-                        profilesCounter += 1
+                        profilesCounter += 1;
                         cJSON *email = cJSON_GetObjectItem(profile, "email");
                         cJSON *name = cJSON_GetObjectItem(profile, "nome");
                         if (profilesCounter > 1){
                             strcat(payload, ",");
                         }
-                        sprintf(profileJson, "{\"email\": \"%s\", \"name\": \"%s\"}",
+                        sprintf(profileJson, "{\"email\": \"%s\", \"nome\": \"%s\"}",
                         email->valuestring, name->valuestring);
                         strcat(payload, profileJson);
                     } 
@@ -120,7 +121,7 @@ void* handle_client(void* arg) {
             else if (strcmp(action->valuestring, "getAllProfilesBySkill") == 0){
 
                 char payload[10000];
-                char profileJson[200]
+                char profileJson[200];
                 strcpy(payload, "{\"profiles\":[");
                 int profilesCounter = 0;
 
@@ -133,13 +134,13 @@ void* handle_client(void* arg) {
                     for(int j = 0; j < num_skills; j++) {
                         cJSON *skill = cJSON_GetArrayItem(skills_array, j);
                         if (strcmp(skill->valuestring, message->valuestring) == 0){
-                            profilesCounter += 1
+                            profilesCounter += 1;
                             cJSON *email = cJSON_GetObjectItem(profile, "email");
                             cJSON *name = cJSON_GetObjectItem(profile, "nome");
                             if (profilesCounter > 1){
                                 strcat(payload, ",");
                             }
-                            sprintf(profileJson, "{\"email\": \"%s\", \"name\": \"%s\"}",
+                            sprintf(profileJson, "{\"email\": \"%s\", \"nome\": \"%s\"}",
                             email->valuestring, name->valuestring);
                             strcat(payload, profileJson);
                         }
@@ -154,23 +155,23 @@ void* handle_client(void* arg) {
             else if (strcmp(action->valuestring, "getAllProfilesByYear") == 0){
 
                 char payload[10000];
-                char profileJson[200]
+                char profileJson[200];
                 strcpy(payload, "{\"profiles\":[");
                 int profilesCounter = 0;
 
                 for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *year = cJSON_GetObjectItem(profile, "ano_formatura");
-                    if (strcmp(year->valueint, message->valueint) == 0){
-                        profilesCounter += 1
+                    if (year->valueint == message->valueint){
+                        profilesCounter += 1;
                         cJSON *email = cJSON_GetObjectItem(profile, "email");
                         cJSON *name = cJSON_GetObjectItem(profile, "nome");
-                        cJSON *year = cJSON_GetObjectItem(profile, "formacao");
+                        cJSON *course = cJSON_GetObjectItem(profile, "formacao");
                         if (profilesCounter > 1){
                             strcat(payload, ",");
                         }
-                        sprintf(profileJson, "{\"email\": \"%s\", \"name\": \"%s\",  \"formacao\": %d}",
-                        email->valuestring, name->valuestring, year->valueint);
+                        sprintf(profileJson, "{\"email\": \"%s\", \"nome\": \"%s\", \"formacao\": \"%s\"}",
+                        email->valuestring, name->valuestring, course->valuestring);
                         strcat(payload, profileJson);
                     } 
                 }
@@ -192,32 +193,51 @@ void* handle_client(void* arg) {
             else if (strcmp(action->valuestring, "getProfile") == 0){ //testar
                 char payload[10000];
                 strcpy(payload, "{\"profiles\":[");
+
                 for(int i = 0; i < num_profiles; i++){
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *email = cJSON_GetObjectItem(profile, "email");
                     if (strcmp(email->valuestring, message->valuestring) == 0){
+                        
                         char *json_str = cJSON_PrintUnformatted(profile);
                         strcat(payload, json_str);
-                        strcat(payload, "]}");
-                        strcpy(buffer, payload);
-                        send(client_socket, buffer, strlen(buffer), 0);
                         free(json_str);  
+
                     }
                 }
+
+                strcat(payload, "]}");
+                bzero(buffer, 1024);
+                strcpy(buffer, payload);
+                send(client_socket, buffer, strlen(buffer), 0);
+
             }
 
             else if (strcmp(action->valuestring, "removeProfile") == 0){
+
+                bool profile_found = false;
+
                 for(int i = 0; i < num_profiles; i++){
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *email = cJSON_GetObjectItem(profile, "email");
                     if (strcmp(email->valuestring, message->valuestring) == 0){
-                        cJSON_DeleteItemFromObject(profiles_array, i); // 10000% de chance de estar errado. verificar
-                        strcpy(buffer, "usuario removido");
-                        send(client_socket, buffer, strlen(buffer), 0);
-                    }
-                        strcpy(buffer, "erro: email nao cadastrado");
-                        send(client_socket, buffer, strlen(buffer), 0);                    
+
+                        profile_found = true;
+
+                        cJSON_DeleteItemFromArray(profiles_array, i);
+                        cJSON *removedProfile = cJSON_GetArrayItem(profiles_array, i);
+
+                        fp = fopen("data.json", "w");
+                        fprintf(fp, "%s", cJSON_PrintUnformatted(data_json));
+                        fclose(fp);
+        
+                        cJSON_Delete(removedProfile);
+
+                        break;
+                    }                
                 }
+                if (profile_found) {strcpy(buffer, "Perfil removido com sucesso!");} else {strcpy(buffer, "Erro: perfil não encontrado!");}
+                send(client_socket, buffer, strlen(buffer), 0);    
             }
 
             cJSON_Delete(jsonPayload);
@@ -230,7 +250,7 @@ void* handle_client(void* arg) {
 int main() {
 
     char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5562; //arbitrario
+    int port = 5563; //arbitrario
     socklen_t addr_size;
 
     int server_socket = socket(AF_INET, SOCK_STREAM, 0); //IPv4, TCP
