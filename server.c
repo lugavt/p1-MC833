@@ -90,18 +90,95 @@ void* handle_client(void* arg) {
             }
 
             else if (strcmp(action->valuestring, "getAllProfilesByCourse") == 0){
+                
+                char payload[10000];
+                char profileJson[200]
+                strcpy(payload, "{\"profiles\":[");
+                int profilesCounter = 0;
 
                 for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *course = cJSON_GetObjectItem(profile, "formacao");
                     if (strcmp(course->valuestring, message->valuestring) == 0){
+                        profilesCounter += 1
                         cJSON *email = cJSON_GetObjectItem(profile, "email");
                         cJSON *name = cJSON_GetObjectItem(profile, "nome");
-                        sprintf(buffer, "{\"email\": \"%s\", \"name\": %s}",
+                        if (profilesCounter > 1){
+                            strcat(payload, ",");
+                        }
+                        sprintf(profileJson, "{\"email\": \"%s\", \"name\": \"%s\"}",
                         email->valuestring, name->valuestring);
-
+                        strcat(payload, profileJson);
                     } 
                 }
+
+                strcat(payload, "]}");
+                bzero(buffer, 1024);
+                sprintf(buffer, payload);
+                send(client_socket, buffer, strlen(buffer), 0);
+            }
+            else if (strcmp(action->valuestring, "getAllProfilesBySkill") == 0){
+
+                char payload[10000];
+                char profileJson[200]
+                strcpy(payload, "{\"profiles\":[");
+                int profilesCounter = 0;
+
+                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+
+                    cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
+                    cJSON *skills_array = cJSON_GetObjectItem(profile, "habilidades");
+                    int num_skills = cJSON_GetArraySize(skills_array);
+
+                    for(int j = 0; j < num_skills; j++) {
+                        cJSON *skill = cJSON_GetArrayItem(skills_array, j);
+                        if (strcmp(skill->valuestring, message->valuestring) == 0){
+                            profilesCounter += 1
+                            cJSON *email = cJSON_GetObjectItem(profile, "email");
+                            cJSON *name = cJSON_GetObjectItem(profile, "nome");
+                            if (profilesCounter > 1){
+                                strcat(payload, ",");
+                            }
+                            sprintf(profileJson, "{\"email\": \"%s\", \"name\": \"%s\"}",
+                            email->valuestring, name->valuestring);
+                            strcat(payload, profileJson);
+                        }
+                    }
+                }
+
+                strcat(payload, "]}");
+                bzero(buffer, 1024);
+                sprintf(buffer, payload);
+                send(client_socket, buffer, strlen(buffer), 0);
+            }
+            else if (strcmp(action->valuestring, "getAllProfilesByYear") == 0){
+
+                char payload[10000];
+                char profileJson[200]
+                strcpy(payload, "{\"profiles\":[");
+                int profilesCounter = 0;
+
+                for(int i = 0; i < num_profiles; i++){ //verificando se ja tem
+                    cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
+                    cJSON *year = cJSON_GetObjectItem(profile, "ano_formatura");
+                    if (strcmp(year->valueint, message->valueint) == 0){
+                        profilesCounter += 1
+                        cJSON *email = cJSON_GetObjectItem(profile, "email");
+                        cJSON *name = cJSON_GetObjectItem(profile, "nome");
+                        cJSON *year = cJSON_GetObjectItem(profile, "formacao");
+                        if (profilesCounter > 1){
+                            strcat(payload, ",");
+                        }
+                        sprintf(profileJson, "{\"email\": \"%s\", \"name\": \"%s\",  \"formacao\": %d}",
+                        email->valuestring, name->valuestring, year->valueint);
+                        strcat(payload, profileJson);
+                    } 
+                }
+
+                strcat(payload, "]}");
+                bzero(buffer, 1024);
+                sprintf(buffer, payload);
+                send(client_socket, buffer, strlen(buffer), 0);
             }
 
             else if (strcmp(action->valuestring, "getAllProfiles") == 0){ //retorna o arquivo em forma de string

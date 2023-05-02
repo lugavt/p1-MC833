@@ -92,8 +92,31 @@ int main() {
                 printf("Digite o ano de formatura: ");
                 scanf("%d", &profile.ano_formatura);
 
-                printf("Digite as suas habilidades: ");
-                scanf("%s", profile.habilidades);
+                char input_message[1000];
+                printf("Digite as suas habilidades separados por vírgula: ");
+                scanf("%s", input_message);
+                
+                char *current_skill;
+                char skills[1000] = "[";
+
+                current_skill = strtok(input_message, ",");
+                int skill_counter = 0;
+
+                while (current_skill != NULL) {
+
+                    if (skill_counter > 0){
+                        strcat(skills, ",");
+                    }
+                    strcat(skills, "\"");
+                    strcat(skills, current_skill);
+                    strcat(skills, "\"");
+
+                    current_skill = strtok(NULL, ",");
+                    skill_counter++;
+                }
+
+                strcat(skills, "]");
+                strcpy(profile.habilidades, skills);
 
                 sprintf(payload.message, "{\"email\": \"%s\", \"nome\": \"%s\", \"sobrenome\": \"%s\", \"cidade\": \"%s\", \"formacao\": \"%s\", \"ano_formatura\": %d, \"habilidades\": \"%s\"}",
                 profile.email, profile.nome, profile.sobrenome, profile.cidade, profile.formacao, profile.ano_formatura, profile.habilidades);
