@@ -190,12 +190,16 @@ void* handle_client(void* arg) {
             }
 
             else if (strcmp(action->valuestring, "getProfile") == 0){ //testar
+                char payload[10000];
+                strcpy(payload, "{\"profiles\":[");
                 for(int i = 0; i < num_profiles; i++){
                     cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
                     cJSON *email = cJSON_GetObjectItem(profile, "email");
                     if (strcmp(email->valuestring, message->valuestring) == 0){
                         char *json_str = cJSON_PrintUnformatted(profile);
-                        strcpy(buffer, json_str);
+                        strcat(payload, json_str);
+                        strcat(payload, "]}");
+                        strcpy(buffer, payload);
                         send(client_socket, buffer, strlen(buffer), 0);
                         free(json_str);  
                     }

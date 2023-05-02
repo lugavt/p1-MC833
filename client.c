@@ -4,6 +4,58 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include "cJSON.h"
+
+void printResponse(cJSON *profiles_array, char* print_type){
+
+    int num_profiles = cJSON_GetArraySize(profiles_array);
+
+    for(int i = 0; i < num_profiles; i++){
+
+        if (i > 0){
+            printf("\n-------------------------------------------------------------\n")
+        }
+
+        cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
+
+        cJSON *name = cJSON_GetObjectItem(profile, "nome");
+        cJSON *email = cJSON_GetObjectItem(profile, "email");
+
+        printf("NOME: %s\n", name->valuestring);
+        printf("EMAIL: %s\n", email->valuestring);
+
+
+        if (strcmp(print_type, "year") == 0) {
+            
+            cJSON *course = cJSON_GetObjectItem(profile, "formacao");
+            printf("FORMAÇÃO: %s\n", course->valuestring);
+
+
+        } else if (strcmp(print_type, "all") == 0) {
+
+            cJSON *course = cJSON_GetObjectItem(profile, "formacao");
+            cJSON *sobrenome = cJSON_GetObjectItem(profile, "sobrenome");
+            cJSON *cidade = cJSON_GetObjectItem(profile, "cidade");
+            cJSON *ano_formatura = cJSON_GetObjectItem(profile, "ano_formatura");
+
+            printf("SOBRENOME: %s\n", sobrenome->valuestring);
+            printf("CIDADE: %s\n", cidade->valuestring);
+            printf("FORMAÇÃO: %s\n", course->valuestring);
+            printf("ANO DE FORMAÇÃO: %d\n", ano_formatura->valueint);
+            printf("HABILIDADES:\n");
+
+            cJSON *skills_array = cJSON_GetObjectItem(profile, "habilidades");
+            int num_skills = cJSON_GetArraySize(skills_array);
+            
+            for(int j = 0; j < num_skills; j++) {
+                cJSON *skill = cJSON_GetArrayItem(skills_array, j);
+                printf("    %s", skill->valuestring);
+        }
+    }
+    
+    
+}
+}
 
 int main() {
 
@@ -155,7 +207,17 @@ int main() {
                 }
 
                 buffer[read_size] = '\0';
-                printf("%s", buffer);
+                cJSON *jsonPayload = cJSON_Parse(buffer);
+                if (jsonPayload == NULL) {
+                    printf("Erro ao fazer o parse do JSON.\n");
+                    break;
+                }
+
+                cJSON *profiles_array = cJSON_GetObjectItem(jsonPayload, "profiles");
+
+                printResponse(profiles_array, "course");
+
+                // printf("%s", buffer);
                 break;
 
             case 3:
@@ -179,7 +241,16 @@ int main() {
                 }
 
                 buffer[read_size] = '\0';
-                printf("%s", buffer);
+                cJSON *jsonPayload = cJSON_Parse(buffer);
+                if (jsonPayload == NULL) {
+                    printf("Erro ao fazer o parse do JSON.\n");
+                    break;
+                }
+
+                cJSON *profiles_array = cJSON_GetObjectItem(jsonPayload, "profiles");
+
+                printResponse(profiles_array, "skill");
+
                 break;
 
             case 4:
@@ -203,7 +274,15 @@ int main() {
                 }
 
                 buffer[read_size] = '\0';
-                printf("%s", buffer);
+                cJSON *jsonPayload = cJSON_Parse(buffer);
+                if (jsonPayload == NULL) {
+                    printf("Erro ao fazer o parse do JSON.\n");
+                    break;
+                }
+
+                cJSON *profiles_array = cJSON_GetObjectItem(jsonPayload, "profiles");
+
+                printResponse(profiles_array, "year");
                 break;
 
             case 5:
@@ -225,7 +304,16 @@ int main() {
                 }
 
                 buffer[read_size] = '\0';
-                printf("%s", buffer);
+                cJSON *jsonPayload = cJSON_Parse(buffer);
+                if (jsonPayload == NULL) {
+                    printf("Erro ao fazer o parse do JSON.\n");
+                    break;
+                }
+
+                cJSON *profiles_array = cJSON_GetObjectItem(jsonPayload, "profiles");
+
+                printResponse(profiles_array, "all");
+
                 break;
 
             case 6:
@@ -249,7 +337,15 @@ int main() {
                 }
 
                 buffer[read_size] = '\0';
-                printf("%s", buffer);
+                cJSON *jsonPayload = cJSON_Parse(buffer);
+                if (jsonPayload == NULL) {
+                    printf("Erro ao fazer o parse do JSON.\n");
+                    break;
+                }
+
+                cJSON *profiles_array = cJSON_GetObjectItem(jsonPayload, "profiles");
+
+                printResponse(profiles_array, "all");
                 break;
 
             case 7:
