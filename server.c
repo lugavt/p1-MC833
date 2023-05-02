@@ -241,7 +241,7 @@ void* handle_client(void* arg) { // worker to handle client request
 int main() {
 
     char *ip = "127.0.0.1";
-    int port = 5563;
+    int port = 5564;
     socklen_t addr_size;
 
     int server_socket = socket(AF_INET, SOCK_STREAM, 0); //IPv4, TCP

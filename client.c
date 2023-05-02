@@ -78,7 +78,7 @@ int main() {
     } Payload;
 
     char *ip = "127.0.0.1"; // local address
-    int port = 5563; 
+    int port = 5564; 
 
     struct sockaddr_in client_address; 
     int client_socket = socket(AF_INET, SOCK_STREAM, 0); // defining the client as a TCP socket with IPv4
