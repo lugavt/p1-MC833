@@ -1,11 +1,3 @@
-            // Profile p;
-            // strcpy(p.email, cJSON_GetObjectItem(json, "email")->valuestring);
-            // strcpy(p.nome, cJSON_GetObjectItem(json, "nome")->valuestring);
-            // strcpy(p.sobrenome, cJSON_GetObjectItem(json, "sobrenome")->valuestring);
-            // strcpy(p.cidade, cJSON_GetObjectItem(json, "cidade")->valuestring);
-            // strcpy(p.formacao, cJSON_GetObjectItem(json, "formacao")->valuestring);
-            // p.ano_formatura = cJSON_GetObjectItem(json, "ano_formatura")->valueint;
-            // strcpy(p.habilidades, cJSON_GetObjectItem(json, "habilidades")->valuestring);
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,19 +7,6 @@
 #include <pthread.h>
 #include "cJSON.h"
 #include <stdbool.h>
-
-    
-typedef struct { //struct contendo as infos de perfil
-    char email[50];
-    char nome[50];
-    char sobrenome[50];
-    char cidade[50];
-    char formacao[50];
-    int ano_formatura;
-    char habilidades[100];
-} Profile;
-
-//struct profile profiles[1000]; //criação do vetor de perfis (estrutura de dados é uma lista de structs)
 
 void* handle_client(void* arg) {
     int client_socket = *(int*)arg;
@@ -89,7 +68,6 @@ void* handle_client(void* arg) {
                     send(client_socket, buffer, strlen(buffer), 0);
                 }
             }
-
             else if (strcmp(action->valuestring, "getAllProfilesByCourse") == 0){
                 
                 char payload[10000];
@@ -181,7 +159,6 @@ void* handle_client(void* arg) {
                 sprintf(buffer, payload);
                 send(client_socket, buffer, strlen(buffer), 0);
             }
-
             else if (strcmp(action->valuestring, "getAllProfiles") == 0){ //retorna o arquivo em forma de string
                 bzero(buffer, 1024);
                 char *json_str = cJSON_PrintUnformatted(data_json);
@@ -189,7 +166,6 @@ void* handle_client(void* arg) {
                 send(client_socket, buffer, strlen(buffer), 0);
                 free(json_str);
             }
-
             else if (strcmp(action->valuestring, "getProfile") == 0){ //testar
                 char payload[10000];
                 strcpy(payload, "{\"profiles\":[");
@@ -212,7 +188,6 @@ void* handle_client(void* arg) {
                 send(client_socket, buffer, strlen(buffer), 0);
 
             }
-
             else if (strcmp(action->valuestring, "removeProfile") == 0){
 
                 bool profile_found = false;

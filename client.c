@@ -6,37 +6,37 @@
 #include <arpa/inet.h>
 #include "cJSON.h"
 
-void printResponse(cJSON *profiles_array, char* print_type){
+void printResponse(cJSON *profiles_array, char* print_type){ // response dealer
 
     printf("\n--------------------------RESULTADOS-----------------------------------\n");
 
     int num_profiles = cJSON_GetArraySize(profiles_array);
-    if (num_profiles == 0) {
+    if (num_profiles == 0) { // verifies if there is a least one profile
         printf("\nNenhum perfil encontrado!\n");
     }
 
-    for(int i = 0; i < num_profiles; i++){
+    for(int i = 0; i < num_profiles; i++){ // iterates over every profile and gathers required informations 
 
         if (i > 0){
             printf("\n-------------------------------------------------------------\n");
         }
 
         cJSON *profile = cJSON_GetArrayItem(profiles_array, i);
-
         cJSON *name = cJSON_GetObjectItem(profile, "nome");
         cJSON *email = cJSON_GetObjectItem(profile, "email");
 
+        // generic information
         printf("\nNOME: %s\n", name->valuestring);
         printf("EMAIL: %s\n", email->valuestring);
 
 
-        if (strcmp(print_type, "year") == 0) {
+        if (strcmp(print_type, "year") == 0) { // info of year of graduation
             
             cJSON *course = cJSON_GetObjectItem(profile, "formacao");
             printf("FORMAÇÃO: %s\n", course->valuestring);
 
 
-        } else if (strcmp(print_type, "all") == 0) {
+        } else if (strcmp(print_type, "all") == 0) { // all info
 
             cJSON *course = cJSON_GetObjectItem(profile, "formacao");
             cJSON *sobrenome = cJSON_GetObjectItem(profile, "sobrenome");
@@ -52,19 +52,17 @@ void printResponse(cJSON *profiles_array, char* print_type){
             cJSON *skills_array = cJSON_GetObjectItem(profile, "habilidades");
             int num_skills = cJSON_GetArraySize(skills_array);
             
-            for(int j = 0; j < num_skills; j++) {
+            for(int j = 0; j < num_skills; j++) { // printing skills one by one
                 cJSON *skill = cJSON_GetArrayItem(skills_array, j);
                 printf("    %s\n", skill->valuestring);
+            }
         }
     }
-    
-    
-}
 }
 
 int main() {
 
-    typedef struct { //struct contendo as infos de perfil
+    typedef struct { //struct containing profiles' info
         char email[50];
         char nome[50];
         char sobrenome[50];
@@ -74,28 +72,29 @@ int main() {
         char habilidades[100];
     } Profile;
 
-    typedef struct { //struct contendo o payload das mensagens a serem enviadas
+    typedef struct { //struct containing the messages' payload 
         char action[50];
         char message[500];
     } Payload;
 
-    char *ip = "127.0.0.1"; //local. fazer global depois (prov na mesma rede)
-    int port = 5563; //arbitrario
-    struct sockaddr_in client_address;
-    int client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    char *ip = "127.0.0.1"; // local address
+    int port = 5563; 
 
-    if (client_socket < 0) {
+    struct sockaddr_in client_address; 
+    int client_socket = socket(AF_INET, SOCK_STREAM, 0); // defining the client as a TCP socket with IPv4
+
+    if (client_socket < 0) { // verifies if there is an error in the socket's creation
         perror("Erro ao criar socket do cliente");
         exit(1);
     }
 
-    struct sockaddr_in server_address;
+    struct sockaddr_in server_address; 
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = inet_addr(ip);
     server_address.sin_port = port;
 
-    if (connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) {
+    if (connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) { // connecting the client and the server
         perror("Erro ao conectar ao servidor");
         return 1;
     }
@@ -106,10 +105,10 @@ int main() {
     printf("  _________\n /         \\\n |  /\\ /\\  |\n |    -    |\n |  \\___/  |\n \\_________/");
     printf("\n\nBEM VINDO!");
 
-    while (1) {
+    while (1) { // loop of requests for the client
 
         int opcao;
-
+        // options of request
         printf("\n--------------------- MENU INICIAL --------------------------\n");
         printf("\nEscolha uma opcao:\n");
         printf("1 - Cadastro\n");
@@ -129,7 +128,7 @@ int main() {
         cJSON *jsonPayload;
 
         switch(opcao) {
-            case 1:
+            case 1: // register a new profile
                 Profile profile;
                 strcpy(payload.action, "register");
 
@@ -157,13 +156,13 @@ int main() {
                 printf("Digite as suas habilidades separados por vírgula: ");
                 scanf("%s", input_message);
                 
-                char *current_skill;
+                char *current_skill; // creating skills' array
                 char skills[1000] = "[";
 
                 current_skill = strtok(input_message, ",");
                 int skill_counter = 0;
 
-                while (current_skill != NULL) {
+                while (current_skill != NULL) { //
 
                     if (skill_counter > 0){
                         strcat(skills, ",");
@@ -180,14 +179,14 @@ int main() {
                 strcpy(profile.habilidades, skills);
 
                 sprintf(payload.message, "{\"email\": \"%s\", \"nome\": \"%s\", \"sobrenome\": \"%s\", \"cidade\": \"%s\", \"formacao\": \"%s\", \"ano_formatura\": %d, \"habilidades\": %s}",
-                profile.email, profile.nome, profile.sobrenome, profile.cidade, profile.formacao, profile.ano_formatura, profile.habilidades);
+                profile.email, profile.nome, profile.sobrenome, profile.cidade, profile.formacao, profile.ano_formatura, profile.habilidades); // defining message structure
 
                 sprintf(buffer, "{\"action\": \"%s\", \"message\": %s}",
                 payload.action, payload.message);
-                send(client_socket, buffer, strlen(buffer),0);
+                send(client_socket, buffer, strlen(buffer),0); // sending message and action
 
                 bzero(buffer, 10000);
-                read_size = recv(client_socket, buffer, sizeof(buffer),0);
+                read_size = recv(client_socket, buffer, sizeof(buffer),0); // receiving result
 
                 if (read_size <= 0) {
                     break;
@@ -197,7 +196,7 @@ int main() {
                 printf("\n%s\n", buffer);
                 break;
 
-            case 2:
+            case 2: // search profiles by course
                 
                 strcpy(payload.action, "getAllProfilesByCourse");
                 printf("\nDigite o curso selecionado: ");
@@ -228,10 +227,9 @@ int main() {
 
                 printResponse(profiles_array, "course");
 
-                // printf("%s", buffer);
                 break;
 
-            case 3:
+            case 3: // search profiles by skill
                 
                 strcpy(payload.action, "getAllProfilesBySkill");
 
@@ -264,7 +262,7 @@ int main() {
 
                 break;
 
-            case 4:
+            case 4: // seach profiles by year of graduation
                 
                 strcpy(payload.action, "getAllProfilesByYear");
 
@@ -304,7 +302,7 @@ int main() {
                                
                 break;
 
-            case 5:
+            case 5: // get all profiles
                 
                 strcpy(payload.action, "getAllProfiles");
                 strcpy(payload.message, "");
@@ -336,7 +334,7 @@ int main() {
 
                 break;
 
-            case 6:
+            case 6: // get the profile of an email
                 
                 strcpy(payload.action, "getProfile");
 
@@ -369,7 +367,7 @@ int main() {
                 printResponse(profiles_array, "all");
                 break;
 
-            case 7:
+            case 7: // remove a profile
                 
                 strcpy(payload.action, "removeProfile");
 
@@ -394,7 +392,7 @@ int main() {
                 printf("\n%s\n", buffer);
                 break;
 
-            case 8:
+            case 8: // exit program and close connection
 
                 close(client_socket);
                 printf("\nVocê foi desconectado.\n");
@@ -402,7 +400,7 @@ int main() {
                 printf("\n\nVOLTE SEMPRE!\n");
                 return 1;
 
-            default:
+            default: // non-existing option
                 printf("\nOpção inválida.\n");
                 break;
         }
